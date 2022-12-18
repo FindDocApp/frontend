@@ -154,7 +154,7 @@ const Profile = () => {
           {/* SPECIALITY (FOR DOCTORS) */}
           {userInfo.role === "doctor" && (
             <Input
-              label="Specialty"
+              label="Speciality"
               type="text"
               value={input.speciality}
               onChange={(e) => handleInput(e)}

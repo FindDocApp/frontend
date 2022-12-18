@@ -17,12 +17,6 @@ const AddSpeciality = ({ setShow }) => {
   const [loading, setLoading] = useState(false);
 
   const addSpeciality = async () => {
-    // Speciality must be at least 5 letters
-    if (speciality.length < 5) {
-      alert("Please add a speciality");
-      return;
-    }
-
     setLoading(true);
 
     // API post request
