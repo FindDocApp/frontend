@@ -1,8 +1,9 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { getImageUrlFromCloudinary } from "../../../utils/cloudinary";
 import { UserContext } from "../../../context/User";
 import { post } from "../../../utils/fetch";
+import emailjs from "@emailjs/browser";
 // Assets
 import Img from "../../../assets/img/dashboard/profile-img.jpg";
 // Components
@@ -19,6 +20,8 @@ const defaultInput = {
 };
 
 const Profile = () => {
+  const formRef = useRef();
+
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [ShowConfirmUpdate, setShowConfirmUpdate] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -28,6 +31,7 @@ const Profile = () => {
   const [refresh, setRefresh] = useState(false);
   const [imageSrc, setImageSrc] = useState(Img);
   const [password, setPassword] = useState("");
+  const [link, setLink] = useState("");
 
   // Get user info state and setter from user context
   const { userInfo, setUserInfo } = useContext(UserContext);
@@ -35,28 +39,6 @@ const Profile = () => {
   // Input fields handler
   const handleInput = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
-  };
-
-  // Sends password reset link to user
-  const getPasswordResetLink = async () => {
-    setLoading(true);
-
-    // API post request
-    const data = await post(
-      process.env.REACT_APP_API_HOST + "auth/password-reset-link",
-      { email: userInfo.email }
-    );
-
-    // Reset loader state
-    setLoading(false);
-
-    // Handle API response
-    if (data.status === "ok") {
-      setSuccessMessage("A password reset link has been sent to your email.");
-      setShowSuccessMessage(true);
-    } else {
-      alert(data.error);
-    }
   };
 
   // Displays profile update confirmation tab
@@ -113,6 +95,55 @@ const Profile = () => {
     setRefresh(!refresh);
   };
 
+  // Sends password reset link to user
+  const getPasswordResetLink = async () => {
+    setLoading(true);
+
+    // API post request
+    const data = await post(
+      process.env.REACT_APP_API_HOST + "auth/password-reset-link",
+      { email: userInfo.email }
+    );
+
+    // Handle API response
+    if (data.status === "ok") {
+      setLink(data.link)
+    } else {
+      alert(data.error);
+    }
+  };
+
+  const handleSentMessageResponse = (status, text) => {
+    if (status === 200) {
+      setSuccessMessage("A password reset link has been sent to your email.");
+      setShowSuccessMessage(true);
+    } else {
+      console.log(text);
+      alert("Failed to send password reset link, please try again later");
+    }
+    
+    // Reset loader state
+    setLoading(false);
+  };
+
+  // Sends password reset link to user after receiving the link from server
+  useEffect(() => {
+    if (link !== "") {
+      // Send email
+      emailjs
+        .sendForm(
+          process.env.REACT_APP_EMAILJS_SERVICE_ID,
+          process.env.REACT_APP_EMAILJS_PASSWORD_LINK_TEMPLATE_ID,
+          formRef.current,
+          process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+        )
+        .then(
+          (result) => handleSentMessageResponse(result.status, result.text),
+          (error) => handleSentMessageResponse(error.status, error.text)
+        );
+    }
+  }, [link]);
+
   // Runs everytime a new image is selected
   useEffect(() => {
     // Create an object url of the uploaded image to display image preview
@@ -138,7 +169,7 @@ const Profile = () => {
       <Wrapper>
         <h1>Profile</h1>
 
-        <Container onSubmit={handleUpdate}>
+        <Container onSubmit={handleUpdate} ref={formRef}>
           {/* PROFILE IMAGE */}
           <label>Profile picture</label>
           <ProfilePicture imageSrc={imageSrc} setImageFile={setImageFile} />
@@ -160,6 +191,22 @@ const Profile = () => {
               onChange={(e) => handleInput(e)}
             />
           )}
+
+          {/* BELOW FIELDS ARE HIDDEN AND ARE USED IN EMAILS TO SEND PASSWORD RESET LINK */}
+          <input
+            type="text"
+            name="email"
+            hidden={true}
+            value={userInfo.email}
+            onChange={() => {}}
+          />
+          <input
+            type="text"
+            name="link"
+            hidden={true}
+            value={link}
+            onChange={() => {}}
+          />
 
           {/* PASSWORD RESET LINK */}
           <p className="password-reset" onClick={getPasswordResetLink}>

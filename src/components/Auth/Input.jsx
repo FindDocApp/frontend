@@ -8,6 +8,7 @@ const Input = ({type, label, placeholder, value, onChange, required, className})
          type={type}
          placeholder={placeholder}
          value={value}
+         name={label.toLowerCase()}
          onChange={onChange}
          accept='image/png, image/jpeg' // Only accepts PNG | JPG | JPEG image types
          required={required}

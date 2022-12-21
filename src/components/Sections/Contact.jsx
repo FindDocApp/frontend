@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import styled from "styled-components";
-import { post } from "../../utils/fetch";
+import emailjs from "@emailjs/browser";
 // Assets
 import ContactImg1 from "../../assets/img/contact/1.png";
 import ContactImg2 from "../../assets/img/contact/2.png";
@@ -17,6 +17,8 @@ const defaultState = {
 };
 
 export default function Contact() {
+  const formRef = useRef();
+
   const [loading, setLoading] = useState(false);
   const [formInput, setFormInput] = useState(defaultState);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -42,17 +44,26 @@ export default function Contact() {
   const submitContactForm = async () => {
     setLoading(true);
 
-    // API post request
-    const data = await post(
-      process.env.REACT_APP_API_HOST + "home/contact-form",
-      formInput
-    );
+    // Send email
+    emailjs
+      .sendForm(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_CONTACT_TEMPLATE_ID,
+        formRef.current,
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      )
+      .then(
+        (result) => handleSentMessageResponse(result.status, result.text),
+        (error) => handleSentMessageResponse(error.status, error.text)
+      );
+  };
 
-    // Handle response
-    if (data.status === "ok") {
+  const handleSentMessageResponse = (status, text) => {
+    if (status === 200) {
       setShowSuccessMessage(true);
     } else {
-      alert(data.error);
+      console.log(text);
+      alert("Failed to send message, please try again later");
     }
 
     // Reset states
@@ -79,7 +90,7 @@ export default function Contact() {
               className="col-xs-12 col-sm-12 col-md-6 col-lg-6"
               style={{ position: "relative" }}
             >
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit} ref={formRef}>
                 <label className="font13">Name:</label>
                 <input
                   type="text"
@@ -149,7 +160,7 @@ export default function Contact() {
           </div>
         </div>
       </Wrapper>
-      
+
       {/* SUCCESS MESSAGE CONTAINER */}
       {showSuccessMessage && (
         <SuccessMessage
