@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { Helmet } from "react-helmet";
 // Screens
 import Landing from "./screens/Landing.jsx";
@@ -23,13 +23,13 @@ export default function App() {
       
       <LocalizationProvider dateAdapter={AdapterMoment}>
         <UserContextProvider>
-          <BrowserRouter>
+          <HashRouter>
             <Routes>
               <Route path="/*" element={<Landing />}></Route>
               <Route path="/auth/*" element={<Auth />}></Route>
               <Route path="/dashboard/*" element={<Dashboard />}></Route>
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </UserContextProvider>
       </LocalizationProvider>
     </>
